@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 class="text-center">Свайпы</h2>
+
+<div class="card mx-auto" style="max-width: 400px;">
+    {% if potential_matches %}
+        {% if potential_matches[0].photo %}
+    <img src="{{ url_for('static', filename=potential_matches[0].photo) }}" alt="Profile Picture" class="img-thumbnail mb-3">
+{% else %}
+    <p>Фотография не загружена</p>
+{% endif %}
+        <div class="card-body text-center">
+            <h5 class="card-title">{{ potential_matches[0].username }}</h5>
+            <p class="card-text">{{ potential_matches[0].bio }}</p>
+            <form method="post" class="d-flex justify-content-around">
+                <input type="hidden" name="match_id" value="{{ potential_matches[0].id }}">
+                <button type="submit" name="liked" value="false" class="btn btn-danger">Не нравится</button>
+                <button type="submit" name="liked" value="true" class="btn btn-success">Нравится</button>
+            </form>
+        </div>
+    {% else %}
+        <p class="text-center">Нет доступных профилей для просмотра.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const card = document.querySelector(".card");
+        const buttons = document.querySelectorAll("button");
+
+        buttons.forEach(button => {
+            button.addEventListener("click", () => {
+                card.classList.add("animate__animated", "animate__fadeOut");
+                setTimeout(() => card.style.display = "none", 500);
+            });
+        });
+    });
+</script>
+

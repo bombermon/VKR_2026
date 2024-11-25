@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 class="text-center">Ваши мэтчи</h2>
+{% if matches %}
+    <div class="list-group">
+        {% for user in matches %}
+            <div class="list-group-item d-flex align-items-center">
+                {% if user.photo %}
+                    <img src="{{ url_for('static', filename=user.photo) }}" alt="Profile Picture" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover; margin-right: 15px;">
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/default-profile.jpg') }}" alt="Default Profile" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover; margin-right: 15px;">
+                {% endif %}
+                <div>
+                    <h5>{{ user.username }}</h5>
+                    <p>{{ user.bio or 'Без описания' }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-center">У вас нет мэтчей. Начните свайпить, чтобы найти их!</p>
+{% endif %}
+{% endblock %}
