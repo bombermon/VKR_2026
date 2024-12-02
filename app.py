@@ -1,10 +1,10 @@
 from flask import Flask, render_template, redirect, url_for, request, session, flash
 from flask_sqlalchemy import SQLAlchemy
 import os
-from werkzeug.utils import secure_filename
 
 
-# Инициализация Flask приложения
+
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dating.db'
@@ -18,11 +18,14 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+db = SQLAlchemy(app)
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Подключение SQLAlchemy
-db = SQLAlchemy(app)
+
+
 
 # Импорт моделей
 from models import User, Match
@@ -51,27 +54,38 @@ def register():
         bio = request.form['bio']
         file = request.files['photo']
 
+        photo_path = None
+        ml_predictions = None
+
         # Проверяем и сохраняем файл
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-
-            # Создаем папку, если она не существует
-            if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                os.makedirs(app.config['UPLOAD_FOLDER'])
-
+            filename = f"id{len(User.query.all()) + 1}.{file.filename.rsplit('.', 1)[1].lower()}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             photo_path = os.path.join('uploads', filename)
-        else:
-            photo_path = None
+
+            # Вызов ML-модели для анализа фотографии
+            try:
+                full_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                ml_predictions = analyze_photo_with_model(full_photo_path)
+            except Exception as e:
+                print(f"Ошибка при анализе изображения: {e}")
 
         # Сохраняем пользователя
-        new_user = User(username=username, password=password, bio=bio, photo=photo_path)
+        new_user = User(
+            username=username,
+            password=password,
+            bio=bio,
+            photo=photo_path,
+            ml=str(ml_predictions) if ml_predictions else None
+        )
         db.session.add(new_user)
         db.session.commit()
 
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+
 
 # Вход
 @app.route('/login', methods=['GET', 'POST'])
@@ -109,14 +123,22 @@ def profile():
         # Проверяем и сохраняем новую фотографию, если она загружена
         file = request.files['photo']
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+            filename = f"id{user.id}.{file.filename.rsplit('.', 1)[1].lower()}"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             user.photo = os.path.join('uploads', filename)
+
+            # Вызов ML-модели для анализа новой фотографии
+            try:
+                full_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                user.ml = str(analyze_photo_with_model(full_photo_path))
+            except Exception as e:
+                print(f"Ошибка при анализе изображения: {e}")
 
         db.session.commit()
         return redirect(url_for('profile'))
 
     return render_template('profile.html', user=user)
+
 
 
 # Свайпы

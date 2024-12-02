@@ -5,7 +5,9 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     bio = db.Column(db.Text, nullable=True)
-    photo = db.Column(db.String(120), nullable=True)  # Это поле для фотографии
+    photo = db.Column(db.String(120), nullable=True)  # Поле для фотографии
+    ml = db.Column(db.Text, nullable=True)  # Поле для хранения предсказаний модели
+
 
 
 class Match(db.Model):
